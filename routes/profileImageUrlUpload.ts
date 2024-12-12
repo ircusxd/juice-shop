@@ -15,10 +15,11 @@ const request = require('request')
 module.exports = function profileImageUrlUpload () {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.body.imageUrl !== undefined) {
-      const url = req.body.imageUrl
+      const url = new URL(req.body.imageUrl),
       if (url.match(/(.)*solve\/challenges\/server-side(.)*/) !== null) req.app.locals.abused_ssrf_bug = true
       const loggedInUser = security.authenticatedUsers.get(req.cookies.token)
       if (loggedInUser) {
+        if (url.hostname == 'hostname'){
         const imageRequest = request
           .get(url)
           .on('error', function (err: unknown) {
@@ -32,6 +33,7 @@ module.exports = function profileImageUrlUpload () {
               UserModel.findByPk(loggedInUser.data.id).then(async (user: UserModel | null) => { return await user?.update({ profileImage: `/assets/public/images/uploads/${loggedInUser.data.id}.${ext}` }) }).catch((error: Error) => { next(error) })
             } else UserModel.findByPk(loggedInUser.data.id).then(async (user: UserModel | null) => { return await user?.update({ profileImage: url }) }).catch((error: Error) => { next(error) })
           })
+        }
       } else {
         next(new Error('Blocked illegal activity by ' + req.socket.remoteAddress))
       }
